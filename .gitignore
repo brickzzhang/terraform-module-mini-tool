@@ -1,2 +1,4 @@
 .idea/*
 DEMO-README.md
+*variables.tf
+*outputs.tf

@@ -11,3 +11,5 @@ This script is used to generate simple readme demo of tencentcloud terraform mod
 ## Note
 
 1.This script only generates the boring part which describes variables and output fields, you need to modify the left parts according your specific module information.
+
+2.The output of the script is NOT 100% CORRECT but could leave the most doc editing work out, please RECHECK the content before you release it. 

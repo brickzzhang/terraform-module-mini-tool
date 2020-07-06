@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"reflect"
 
@@ -30,7 +31,7 @@ The following resources are included.
 
 ## Conditional Creation
 
-This module can create VPC and VPC Subnet.
+This module can create VPC and VPC Subnet[MODIFY !!!].
 
 ## Inputs
 
@@ -50,7 +51,7 @@ Mozilla Public License Version 2.0.
 See LICENSE for full details.
 `
 
-var keywordList = []string{"number", "null", "string", "map(string)", "list(string)"}
+var keywordList = []string{"number", "null", "string", "map(string)", "list(string)", "bool", "true", "false"}
 
 func inputPreProcess(cfg string, desCfg string) {
 	data, _ := ioutil.ReadFile(cfg)
@@ -83,7 +84,10 @@ func parse(cfg string) map[string]interface{} {
 	viper.SetConfigName(cfg)
 	viper.AddConfigPath(".")
 	viper.SetConfigType("hcl")
-	_ = viper.ReadInConfig()
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Printf("ReadInConfig error: %s\n", err)
+		panic(err)
+	}
 
 	return viper.AllSettings()
 }
@@ -154,19 +158,32 @@ func cleanTmp(file string) {
 	}
 }
 
+func checkFileExist(file string) bool {
+	_, err := os.Stat(file)
+	if err != nil {
+		return os.IsExist(err)
+	}
+	return true
+}
+
 func main() {
 	fmt.Println("Please input your variables.tf path, e.g. /Users/brick/workspace/terraform/terraform-tencentcloud-modules/terraform-tencentcloud-clb/")
-	var path string
+	var path, inputStr, outputStr string
 	fmt.Scanf("%s\n", &path)
-	var inputCfg = "variables.tf"
-	desInputCfg := "tmp-"+inputCfg
-	inputStr := generateReadmeStr(path+"/"+inputCfg, desInputCfg, inputPreProcess, inputGenReadmeStr)
-	cleanTmp(desInputCfg)
 
-	outputCfg := "outputs.tf"
-	desOutputCfg := "tmp-"+outputCfg
-	outputStr := generateReadmeStr(path+"/"+outputCfg, desOutputCfg, outputPreProcess, outputGenReadmeStr)
-	cleanTmp(desOutputCfg)
+	var inputCfg = "variables.tf"
+	if checkFileExist(path+"/"+inputCfg) {
+		desInputCfg := "tmp-"+inputCfg
+		inputStr = generateReadmeStr(path+"/"+inputCfg, desInputCfg, inputPreProcess, inputGenReadmeStr)
+		cleanTmp(desInputCfg)
+	}
+
+	var outputCfg = "outputs.tf"
+	if checkFileExist(path+"/"+outputCfg) {
+		desOutputCfg := "tmp-"+outputCfg
+		outputStr = generateReadmeStr(path+"/"+outputCfg, desOutputCfg, outputPreProcess, outputGenReadmeStr)
+		cleanTmp(desOutputCfg)
+	}
 
 	readmeFile := "DEMO-README.md"
 	readmeStr := fmt.Sprintf(templateStr, inputStr, outputStr)
