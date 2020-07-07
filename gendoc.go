@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
-	"regexp"
 	"strings"
 
 	hcl "github.com/hashicorp/hcl/v2"
@@ -53,33 +51,6 @@ See LICENSE for full details.
 `
 
 var keywordList = []string{"number", "null", "string", "map(string)", "list(string)", "bool", "true", "false"}
-
-func inputPreProcess(cfg string, desCfg string) {
-	data, _ := ioutil.ReadFile(cfg)
-	for _, keyword := range keywordList {
-		data = bytes.Replace(data, []byte("= "+keyword), []byte("= \""+keyword+"\""), -1)
-	}
-	if err := ioutil.WriteFile(desCfg, data, 0644); err != nil {
-		panic(err)
-	}
-}
-
-func outputPreProcess(cfg string, desCfg string) {
-	data, _ := ioutil.ReadFile(cfg)
-	regex := regexp.MustCompile(`\s*value\s*=(.*)\n`)
-	linesRegex := regex.FindAllStringSubmatch(string(data), -1)
-	var outStr []string
-	for _, item := range linesRegex {
-		outStr = append(outStr, item[1])
-	}
-
-	for _, item := range outStr {
-		data = bytes.Replace(data, []byte(item), []byte(" \"\""), -1)
-	}
-	if err := ioutil.WriteFile(desCfg, data, 0644); err != nil {
-		panic(err)
-	}
-}
 
 func inputGenReadmeStr(data jsonObj) string {
 	var inputStr = "| Name | Description | Type | Default | Required |\n|------|-------------|:----:|:-----:|:-----:|\n"
