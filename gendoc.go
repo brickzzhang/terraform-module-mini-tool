@@ -2,18 +2,21 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"reflect"
-
 	"regexp"
+	"strings"
+
+	hcl "github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/spf13/viper"
 )
 
-var templateStr =
-`
+var templateStr = `
 # TencentCloud [MODIFY !!!] Module for Terraform
 
 ## terraform-tencentcloud-vpc
@@ -58,14 +61,14 @@ func inputPreProcess(cfg string, desCfg string) {
 	for _, keyword := range keywordList {
 		data = bytes.Replace(data, []byte("= "+keyword), []byte("= \""+keyword+"\""), -1)
 	}
-	if err :=ioutil.WriteFile(desCfg, data, 0644); err != nil {
+	if err := ioutil.WriteFile(desCfg, data, 0644); err != nil {
 		panic(err)
 	}
 }
 
 func outputPreProcess(cfg string, desCfg string) {
 	data, _ := ioutil.ReadFile(cfg)
-	regex :=  regexp.MustCompile(`\s*value\s*=(.*)\n`)
+	regex := regexp.MustCompile(`\s*value\s*=(.*)\n`)
 	linesRegex := regex.FindAllStringSubmatch(string(data), -1)
 	var outStr []string
 	for _, item := range linesRegex {
@@ -92,59 +95,140 @@ func parse(cfg string) map[string]interface{} {
 	return viper.AllSettings()
 }
 
-func inputGenReadmeStr(data map[string]interface{}) string {
+func inputGenReadmeStr(data jsonObj) string {
 	var inputStr = "| Name | Description | Type | Default | Required |\n|------|-------------|:----:|:-----:|:-----:|\n"
 	var inputLine = "| %s | %s | %s | %s | %s \n"
 
-	for _, v := range data["variable"].([]map[string]interface{}) {
-		for kk, vv := range v {
-			for _, vvv := range vv.([]map[string]interface{}) {
-				name := kk
-				description := ""
-				if vvv["description"] != nil {
-					description = vvv["description"].(string)
+	for k, v := range data["variable"].(jsonObj) {
+		of := reflect.ValueOf(v)
+		typeName := of.Kind()
+		if typeName == reflect.Map {
+			keys := of.MapKeys()
+			description, required, typeInterface := "", "no", "string"
+			var defaultInterface interface{}
+			for key := range keys {
+				if keys[key].String() == "description" {
+					description = of.MapIndex(keys[key]).Elem().String()
 				}
-				typeInterface := reflect.ValueOf(vvv["type"])
-				defaultInterface := reflect.ValueOf(vvv["default"])
-				required := "no"
-				if vvv["required"] != nil {
-					required = "yes"
+				if keys[key].String() == "required" {
+					requireds := of.MapIndex(keys[key])
+					if !requireds.IsNil() {
+						required = "yes"
+					}
 				}
-				str := fmt.Sprintf(inputLine, name, description, typeInterface, defaultInterface, required)
-				inputStr += str
+
+				if keys[key].String() == "type" {
+					spkind := of.MapIndex(keys[key])
+					resultStr := spkind.Elem().String()
+					resultStr = strings.ReplaceAll(resultStr, "${", "")
+					resultStr = strings.ReplaceAll(resultStr, "}", "")
+					typeInterface = resultStr
+					if strings.Index(resultStr, "object") == 0 {
+						typeInterface = "object"
+					}
+				}
+
+				if keys[key].String() == "default" {
+					ele := of.MapIndex(keys[key]).Elem()
+					if ele.Kind() == reflect.String {
+						result := strings.ReplaceAll(ele.String(), "${", "")
+						result = strings.ReplaceAll(result, "}", "")
+						defaultInterface = result
+					} else if ele.Kind() == reflect.Int {
+						defaultInterface = ele.Int()
+					} else if ele.Kind() == reflect.Bool {
+						defaultInterface = ele.Bool()
+
+					} else if ele.Kind() == reflect.Map {
+						if ele.IsValid() {
+							defaultInterface, _ = json.Marshal(map[string]interface{}{})
+						}
+					} else if ele.Kind() == reflect.Slice {
+						if ele.IsValid() {
+							defaultInterface, _ = json.Marshal([]interface{}{})
+						}
+					} else {
+						defaultInterface = "xxxxxxxx"
+					}
+				}
 			}
+			str := fmt.Sprintf(inputLine, k, description, typeInterface, defaultInterface, required)
+			inputStr += str
 		}
 	}
 
 	return inputStr
 }
 
-func outputGenReadmeStr(data map[string]interface{}) string {
+func outputGenReadmeStr(data jsonObj) string {
 	var outputStr = "| Name | Description |\n|------|-------------|\n"
 	var outputLine = "| %s | %s |\n"
 
-	for _, v := range data["output"].([]map[string]interface{}) {
-		for kk, vv := range v {
-			for _, vvv := range vv.([]map[string]interface{}) {
-				name := kk
-				description := ""
-				if vvv["description"] != nil {
-					description = vvv["description"].(string)
+	for k, v := range data["output"].(jsonObj) {
+		of := reflect.ValueOf(v)
+		typeName := of.Kind()
+		if typeName == reflect.Map {
+			keys := of.MapKeys()
+			description := ""
+
+			for key := range keys {
+				if keys[key].String() == "description" {
+					description = of.MapIndex(keys[key]).Elem().String()
 				}
-				str := fmt.Sprintf(outputLine, name, description)
-				outputStr += str
 			}
+			str := fmt.Sprintf(outputLine, k, description)
+			outputStr += str
 		}
 	}
 
 	return outputStr
 }
 
-func generateReadmeStr(config string, desConfig string, preProcessFun func(string, string), genStrFun func(map[string]interface{}) string ) (readmeStr string) {
-	preProcessFun(config, desConfig)
-	data := parse(desConfig)
-	readmeStr = genStrFun(data)
+func generateReadmeStr(config string, desConfig string, preProcessFun func(string, string), genStrFun func(jsonObj) string) (readmeStr string) {
+	//preProcessFun(config, desConfig)
+	//data := parse(desConfig)'
+	var bytes []byte
+	var err error
+
+	bytes, err = ioutil.ReadFile(config)
+	if err != nil {
+		fmt.Errorf("Failed to read file: %s\n", err)
+	}
+
+	var content interface{}
+	content, err = getHclJSON(bytes, config)
+	if err != nil {
+		fmt.Errorf("Failed to read file: %s\n", err)
+		return
+	}
+
+	readmeStr = genStrFun(content.(jsonObj))
 	return
+}
+
+func getHclJSON(bytes []byte, filename string) (interface{}, error) {
+	file, diags := hclsyntax.ParseConfig(bytes, filename, hcl.Pos{Line: 1, Column: 1})
+	if diags.HasErrors() {
+		return nil, diags
+	}
+	obj, err := convertFile(file)
+	if err != nil {
+		return nil, nil
+	}
+
+	if len(obj) > 0 {
+		/*	if v, ok := obj["variable"]; ok {
+			mmp := map[string]interface{}{}
+			values := v.(jsonObj)
+			for kp, kv := range values {
+				mmp[kp] = kv
+			}
+			return v, nil
+		}*/
+		return obj, nil
+	}
+
+	return nil, nil
 }
 
 func cleanTmp(file string) {
@@ -172,15 +256,15 @@ func main() {
 	fmt.Scanf("%s\n", &path)
 
 	var inputCfg = "variables.tf"
-	if checkFileExist(path+"/"+inputCfg) {
-		desInputCfg := "tmp-"+inputCfg
+	if checkFileExist(path + "/" + inputCfg) {
+		desInputCfg := "tmp-" + inputCfg
 		inputStr = generateReadmeStr(path+"/"+inputCfg, desInputCfg, inputPreProcess, inputGenReadmeStr)
 		cleanTmp(desInputCfg)
 	}
 
 	var outputCfg = "outputs.tf"
-	if checkFileExist(path+"/"+outputCfg) {
-		desOutputCfg := "tmp-"+outputCfg
+	if checkFileExist(path + "/" + outputCfg) {
+		desOutputCfg := "tmp-" + outputCfg
 		outputStr = generateReadmeStr(path+"/"+outputCfg, desOutputCfg, outputPreProcess, outputGenReadmeStr)
 		cleanTmp(desOutputCfg)
 	}
