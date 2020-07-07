@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"reflect"
 	"regexp"
 	"strings"
@@ -231,17 +230,6 @@ func getHclJSON(bytes []byte, filename string) (interface{}, error) {
 	return nil, nil
 }
 
-func cleanTmp(file string) {
-	cmd := exec.Command("rm", file)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil {
-		fmt.Printf("cmd.Run() failed with %s\n", err)
-	}
-}
-
 func checkFileExist(file string) bool {
 	_, err := os.Stat(file)
 	if err != nil {
@@ -259,14 +247,12 @@ func main() {
 	if checkFileExist(path + "/" + inputCfg) {
 		desInputCfg := "tmp-" + inputCfg
 		inputStr = generateReadmeStr(path+"/"+inputCfg, desInputCfg, inputPreProcess, inputGenReadmeStr)
-		cleanTmp(desInputCfg)
 	}
 
 	var outputCfg = "outputs.tf"
 	if checkFileExist(path + "/" + outputCfg) {
 		desOutputCfg := "tmp-" + outputCfg
 		outputStr = generateReadmeStr(path+"/"+outputCfg, desOutputCfg, outputPreProcess, outputGenReadmeStr)
-		cleanTmp(desOutputCfg)
 	}
 
 	readmeFile := "DEMO-README.md"
