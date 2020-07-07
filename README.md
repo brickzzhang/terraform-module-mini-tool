@@ -4,9 +4,13 @@
 
 This script is used to generate simple readme demo of tencentcloud terraform modules.
 
-1.Run the script.
+1.Download script under binary directory.
 
-2.Checked DEMO-README.md file under current directory and copy it to your target file.
+2.Run the script, then input your path of variables.tf and outputs.tf as it asked, such as below:
+
+`/Users/brick/workspace/terraform/terraform-tencentcloud-modules/terraform-tencentcloud-clb/`
+
+3.Check DEMO-README.md file under current directory and copy the content to your target file.
 
 ## Note
 
