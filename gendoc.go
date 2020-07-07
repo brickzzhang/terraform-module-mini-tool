@@ -12,7 +12,6 @@ import (
 
 	hcl "github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/spf13/viper"
 )
 
 var templateStr = `
@@ -80,18 +79,6 @@ func outputPreProcess(cfg string, desCfg string) {
 	if err := ioutil.WriteFile(desCfg, data, 0644); err != nil {
 		panic(err)
 	}
-}
-
-func parse(cfg string) map[string]interface{} {
-	viper.SetConfigName(cfg)
-	viper.AddConfigPath(".")
-	viper.SetConfigType("hcl")
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("ReadInConfig error: %s\n", err)
-		panic(err)
-	}
-
-	return viper.AllSettings()
 }
 
 func inputGenReadmeStr(data jsonObj) string {
@@ -183,9 +170,7 @@ func outputGenReadmeStr(data jsonObj) string {
 	return outputStr
 }
 
-func generateReadmeStr(config string, desConfig string, preProcessFun func(string, string), genStrFun func(jsonObj) string) (readmeStr string) {
-	//preProcessFun(config, desConfig)
-	//data := parse(desConfig)'
+func generateReadmeStr(config string, genStrFun func(jsonObj) string) (readmeStr string) {
 	var bytes []byte
 	var err error
 
@@ -216,14 +201,6 @@ func getHclJSON(bytes []byte, filename string) (interface{}, error) {
 	}
 
 	if len(obj) > 0 {
-		/*	if v, ok := obj["variable"]; ok {
-			mmp := map[string]interface{}{}
-			values := v.(jsonObj)
-			for kp, kv := range values {
-				mmp[kp] = kv
-			}
-			return v, nil
-		}*/
 		return obj, nil
 	}
 
@@ -239,25 +216,27 @@ func checkFileExist(file string) bool {
 }
 
 func main() {
-	fmt.Println("Please input your variables.tf path, e.g. /Users/brick/workspace/terraform/terraform-tencentcloud-modules/terraform-tencentcloud-clb/")
+	fmt.Println("\nPlease input your variables.tf path.\n" +
+		"eg: /Users/brick/workspace/terraform/terraform-tencentcloud-modules/terraform-tencentcloud-clb/\n")
 	var path, inputStr, outputStr string
+	fmt.Println("Input project path:")
 	fmt.Scanf("%s\n", &path)
 
 	var inputCfg = "variables.tf"
 	if checkFileExist(path + "/" + inputCfg) {
-		desInputCfg := "tmp-" + inputCfg
-		inputStr = generateReadmeStr(path+"/"+inputCfg, desInputCfg, inputPreProcess, inputGenReadmeStr)
+		inputStr = generateReadmeStr(path+"/"+inputCfg, inputGenReadmeStr)
 	}
 
 	var outputCfg = "outputs.tf"
 	if checkFileExist(path + "/" + outputCfg) {
-		desOutputCfg := "tmp-" + outputCfg
-		outputStr = generateReadmeStr(path+"/"+outputCfg, desOutputCfg, outputPreProcess, outputGenReadmeStr)
+		outputStr = generateReadmeStr(path+"/"+outputCfg, outputGenReadmeStr)
 	}
 
 	readmeFile := "DEMO-README.md"
 	readmeStr := fmt.Sprintf(templateStr, inputStr, outputStr)
 	if err := ioutil.WriteFile(readmeFile, []byte(readmeStr), 0644); err != nil {
 		panic(err)
+		fmt.Errorf("[please contact brickzhang or gogoowang]")
 	}
+	fmt.Println("your file is produce,Name is `DEMO-README.md` \n copy content to your README.md")
 }

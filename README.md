@@ -19,4 +19,4 @@ This script is used to generate simple readme demo of tencentcloud terraform mod
 2.The output of the script is NOT 100% CORRECT but could leave the most doc editing work out, please RECHECK the content before you release it. 
 
 ## Thanks
-Thanks to https://github.com/tmccombs/hcl2json for leading us a way for the conversion.
+Thanks to [hcl2json](https://github.com/tmccombs/hcl2json) for leading us a way for the conversion.
