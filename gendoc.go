@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
-	"os"
+	"log"
 	"reflect"
 	"strings"
 
-	hcl "github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
@@ -49,8 +50,6 @@ Created and maintained by [TencentCloud](https://github.com/terraform-providers/
 Mozilla Public License Version 2.0.
 See LICENSE for full details.
 `
-
-var keywordList = []string{"number", "null", "string", "map(string)", "list(string)", "bool", "true", "false"}
 
 func inputGenReadmeStr(data jsonObj) string {
 	var inputStr = "| Name | Description | Type | Default | Required |\n|------|-------------|:----:|:-----:|:-----:|\n"
@@ -141,24 +140,23 @@ func outputGenReadmeStr(data jsonObj) string {
 	return outputStr
 }
 
-func generateReadmeStr(config string, genStrFun func(jsonObj) string) (readmeStr string) {
-	var bytes []byte
-	var err error
+func generateReadmeStr(config string, genStrFun func(jsonObj) string) (readmeStr string, err error) {
+	//preProcessFun(config, desConfig)
+	//data := parse(desConfig)'
+	var data []byte
 
-	bytes, err = ioutil.ReadFile(config)
+	data, err = ioutil.ReadFile(config)
 	if err != nil {
-		fmt.Errorf("Failed to read file: %s\n", err)
+		return "", fmt.Errorf("failed to read file: %w", err)
 	}
 
 	var content interface{}
-	content, err = getHclJSON(bytes, config)
+	content, err = getHclJSON(data, config)
 	if err != nil {
-		fmt.Errorf("Failed to read file: %s\n", err)
-		return
+		return "", fmt.Errorf("failed to read file: %w", err)
 	}
 
-	readmeStr = genStrFun(content.(jsonObj))
-	return
+	return genStrFun(content.(jsonObj)), nil
 }
 
 func getHclJSON(bytes []byte, filename string) (interface{}, error) {
@@ -178,36 +176,25 @@ func getHclJSON(bytes []byte, filename string) (interface{}, error) {
 	return nil, nil
 }
 
-func checkFileExist(file string) bool {
-	_, err := os.Stat(file)
-	if err != nil {
-		return os.IsExist(err)
-	}
-	return true
-}
-
 func main() {
-	fmt.Println("\nPlease input your variables.tf path.\n" +
-		"eg: /Users/brick/workspace/terraform/terraform-tencentcloud-modules/terraform-tencentcloud-clb/\n")
-	var path, inputStr, outputStr string
-	fmt.Println("Input project path:")
-	fmt.Scanf("%s\n", &path)
+	variablesFile := flag.String("variables", "variables.tf", "variables.tf file path")
+	outputsFile := flag.String("outputs", "outputs.tf", "outputs.tf file path")
+	readmeFile := flag.String("readme", "DEMO-README.md", "README.md file path")
 
-	var inputCfg = "variables.tf"
-	if checkFileExist(path + "/" + inputCfg) {
-		inputStr = generateReadmeStr(path+"/"+inputCfg, inputGenReadmeStr)
+	flag.Parse()
+
+	inputStr, err := generateReadmeStr(*variablesFile, inputGenReadmeStr)
+	if err != nil {
+		log.Fatalf("%+v", err)
 	}
 
-	var outputCfg = "outputs.tf"
-	if checkFileExist(path + "/" + outputCfg) {
-		outputStr = generateReadmeStr(path+"/"+outputCfg, outputGenReadmeStr)
+	outputStr, err := generateReadmeStr(*outputsFile, outputGenReadmeStr)
+	if err != nil {
+		log.Fatalf("%+v", err)
 	}
 
-	readmeFile := "DEMO-README.md"
 	readmeStr := fmt.Sprintf(templateStr, inputStr, outputStr)
-	if err := ioutil.WriteFile(readmeFile, []byte(readmeStr), 0644); err != nil {
-		panic(err)
-		fmt.Errorf("[please contact brickzhang or gogoowang]")
+	if err := ioutil.WriteFile(*readmeFile, []byte(readmeStr), 0644); err != nil {
+		log.Fatalf("%+v", err)
 	}
-	fmt.Println("your file is produce,Name is `DEMO-README.md` \n copy content to your README.md")
 }
