@@ -2,10 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"reflect"
 	"strings"
 
@@ -141,8 +139,6 @@ func outputGenReadmeStr(data jsonObj) string {
 }
 
 func generateReadmeStr(config string, genStrFun func(jsonObj) string) (readmeStr string, err error) {
-	//preProcessFun(config, desConfig)
-	//data := parse(desConfig)'
 	var data []byte
 
 	data, err = ioutil.ReadFile(config)
@@ -174,27 +170,4 @@ func getHclJSON(bytes []byte, filename string) (interface{}, error) {
 	}
 
 	return nil, nil
-}
-
-func main() {
-	variablesFile := flag.String("variables", "variables.tf", "variables.tf file path")
-	outputsFile := flag.String("outputs", "outputs.tf", "outputs.tf file path")
-	readmeFile := flag.String("readme", "DEMO-README.md", "README.md file path")
-
-	flag.Parse()
-
-	inputStr, err := generateReadmeStr(*variablesFile, inputGenReadmeStr)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	outputStr, err := generateReadmeStr(*outputsFile, outputGenReadmeStr)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	readmeStr := fmt.Sprintf(templateStr, inputStr, outputStr)
-	if err := ioutil.WriteFile(*readmeFile, []byte(readmeStr), 0644); err != nil {
-		log.Fatalf("%+v", err)
-	}
 }
