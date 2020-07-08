@@ -56,5 +56,11 @@ jobs:
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: terraform-module-readme-gen
-          path: terraform-module-readme-gen*
+          name: terraform-module-readme-gen_darwin_amd64
+          path: terraform-module-readme-gen_darwin_amd64
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: terraform-module-readme-gen_linux_amd64
+          path: terraform-module-readme-gen_linux_amd64
