@@ -47,6 +47,9 @@ jobs:
       - name: Get dependencies
         run: go mod download
 
+      - name: Gox Installation
+        run: go get github.com/mitchellh/gox
+
       - name: Build
         run: gox -osarch="darwin/amd64 linux/amd64"
 
