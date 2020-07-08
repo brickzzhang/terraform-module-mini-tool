@@ -1,4 +1,4 @@
-name: Go
+name: Go Build
 
 on:
   push:
@@ -26,6 +26,12 @@ jobs:
       - name: Test
         run: go test -v .
 
+      - name: Gox Installation
+        run: go get github.com/mitchellh/gox
+
+      - name: Gox checking
+        run: gox -h
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -45,10 +51,10 @@ jobs:
         run: go mod download
 
       - name: Build
-        run: go build -v .
+        run: gox -osarch="darwin/amd64 linux/amd64"
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
         with:
           name: terraform-module-readme-gen
-          path: terraform-module-readme-gen
+          path: terraform-module-readme-gen*
