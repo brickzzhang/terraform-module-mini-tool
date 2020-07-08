@@ -2,8 +2,11 @@
 
 ## Usage
 
+1.Download the binary file from [latest workflow](https://github.com/brickzzhang/terraform-module-readme-gen/actions/).
+
+2.Run the binary file as below:
 ```bash
-terraform-module-readme-gen -readme DEMO-README.md -variables var.tf -outputs out.tf 
+terraform-module-readme-gen_darwin_amd64 -readme DEMO-README.md -variables var.tf -outputs out.tf 
 ```
 
 then you can copy the content of `DEMO-README.md` file.
