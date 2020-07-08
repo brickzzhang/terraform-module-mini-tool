@@ -29,9 +29,6 @@ jobs:
       - name: Gox Installation
         run: go get github.com/mitchellh/gox
 
-      - name: Gox checking
-        run: gox -h
-
   build:
     name: Build
     runs-on: ubuntu-latest
