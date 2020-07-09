@@ -19,7 +19,7 @@ jobs:
         run: go mod download
       - name: Build normal
         run: |
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o module-gendoc main.go
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o module-gendoc .
             zip module-gendoc.zip module-gendoc
       - name: Create Release
         id: Create_release
