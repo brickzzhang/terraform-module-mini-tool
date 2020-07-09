@@ -1,0 +1,44 @@
+name: GO_RELEASE
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    step:
+      - name: Checkout source
+        uses: actions/checkout@v1
+      - name: Set up Go 1.x
+          uses: actions/setup-go@v2
+          with:
+            go-version: ^1.14
+          id: go
+      - name: Get dependencies
+          run: go mod download
+      - name: Build normal
+          run: |
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o module-gendoc main.go
+            zip module-gendoc.zip module-gendoc
+      - name: Create Release
+        id: Create_release
+        uses: monkeyWie/create-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release normal linux
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./module-gendoc.zip
+          asset_name: module-gendoc-${{ steps.create_release.outputs.tag }}-linux-x64.zip
+          asset_content_type: application/zip
+
+
