@@ -19,11 +19,11 @@ jobs:
         run: go mod download
       - name: Build normal
         run: |
-            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o module-gendoc .
-#            zip module-gendoc.zip module-gendoc
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o module-gendoc .
+      #            zip module-gendoc.zip module-gendoc
       - name: Create Release
         id: Create_release
-        uses: monkeyWie/create-release@master
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
@@ -32,6 +32,7 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload Release normal linux
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
@@ -40,5 +41,4 @@ jobs:
           asset_path: ./module-gendoc
           asset_name: module-gendoc-${{ steps.create_release.outputs.tag }}-linux-x64
           asset_content_type: application/zip
-
 
