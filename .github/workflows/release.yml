@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    step:
+    steps:
       - name: Checkout source
         uses: actions/checkout@v1
       - name: Set up Go 1.x
