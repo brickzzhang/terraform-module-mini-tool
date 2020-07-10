@@ -1,15 +1,22 @@
 # terraform-module-readme-gen
 
+## terraform-module-mini-tool
+
+A mini tool which support below functions:
+
+ - Module initiation
+ Create necessary files for terraform module. 
+ 
+ - Readme generation
+ Generate readme file automatically according to variables.tf and outputs.tf.
+
 ## Usage
 
-1.Download the binary file from [latest workflow](https://github.com/brickzzhang/terraform-module-readme-gen/actions/).
+1.Download the binary file from [release assets](https://github.com/brickzzhang/terraform-module-readme-gen/releases).
 
-2.Run the binary file as below:
-```bash
-terraform-module-readme-gen_darwin_amd64 -readme DEMO-README.md -variables var.tf -outputs out.tf 
-```
+2.Run the binary file and follow the hint.
 
-then you can copy the content of `DEMO-README.md` file.
+then you can copy the content of `DEMO-README.md` file under your specific dir.
 
 ## Note
 

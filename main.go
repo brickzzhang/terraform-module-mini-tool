@@ -1,31 +1,45 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
+	"strings"
 )
 
 func main() {
-	variablesFile := flag.String("variables", "variables.tf", "variables.tf file path")
-	outputsFile := flag.String("outputs", "outputs.tf", "outputs.tf file path")
-	readmeFile := flag.String("readme", "DEMO-README.md", "README.md file path")
+	for {
+	loop:
+		fmt.Printf("%s", hint)
+		var option string
+		fmt.Scanf("%s\n", &option)
 
-	flag.Parse()
-
-	inputStr, err := generateReadmeStr(*variablesFile, inputGenReadmeStr)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	outputStr, err := generateReadmeStr(*outputsFile, outputGenReadmeStr)
-	if err != nil {
-		log.Fatalf("%+v", err)
-	}
-
-	readmeStr := fmt.Sprintf(templateStr, inputStr, outputStr)
-	if err := ioutil.WriteFile(*readmeFile, []byte(readmeStr), 0644); err != nil {
-		log.Fatalf("%+v", err)
+		switch strings.ToLower(option) {
+		case "0":
+			fmt.Printf("%s", moduleInitHint)
+			var isContinue string
+			fmt.Scanf("%s", &isContinue)
+			switch strings.ToLower(isContinue) {
+			case "y":
+				var path string
+				fmt.Println("path of your module: ")
+				fmt.Scanf("%s", &path)
+				moduleInit(path)
+				fmt.Println("Module initiation done!")
+			case "n":
+				goto loop
+			default:
+				fmt.Println("Invalid type, retype please!")
+			}
+		case "1":
+			var path string
+			fmt.Println("path of your module :")
+			fmt.Scanf("%s", &path)
+			demoReadmeGenerate(path)
+			fmt.Println("DEMO-README.md generation done!")
+		case "q":
+			fmt.Println("See you next time, goodbye!")
+			return
+		default:
+			fmt.Println("Invalid type, retype please!")
+		}
 	}
 }

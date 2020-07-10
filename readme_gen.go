@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"reflect"
 	"strings"
 
@@ -100,6 +102,23 @@ func outputGenReadmeStr(data jsonObj) string {
 	return outputStr
 }
 
+func getHclJSON(bytes []byte, filename string) (interface{}, error) {
+	file, diags := hclsyntax.ParseConfig(bytes, filename, hcl.Pos{Line: 1, Column: 1})
+	if diags.HasErrors() {
+		return nil, diags
+	}
+	obj, err := convertFile(file)
+	if err != nil {
+		return nil, nil
+	}
+
+	if len(obj) > 0 {
+		return obj, nil
+	}
+
+	return nil, nil
+}
+
 func generateReadmeStr(config string, genStrFun func(jsonObj) string) (readmeStr string, err error) {
 	var data []byte
 
@@ -117,19 +136,21 @@ func generateReadmeStr(config string, genStrFun func(jsonObj) string) (readmeStr
 	return genStrFun(content.(jsonObj)), nil
 }
 
-func getHclJSON(bytes []byte, filename string) (interface{}, error) {
-	file, diags := hclsyntax.ParseConfig(bytes, filename, hcl.Pos{Line: 1, Column: 1})
-	if diags.HasErrors() {
-		return nil, diags
-	}
-	obj, err := convertFile(file)
+func demoReadmeGenerate(path string) {
+	flag.Parse()
+
+	inputStr, err := generateReadmeStr(path+"/"+"variables.tf", inputGenReadmeStr)
 	if err != nil {
-		return nil, nil
+		log.Fatalf("%+v", err)
 	}
 
-	if len(obj) > 0 {
-		return obj, nil
+	outputStr, err := generateReadmeStr(path+"/"+"outputs.tf", outputGenReadmeStr)
+	if err != nil {
+		log.Fatalf("%+v", err)
 	}
 
-	return nil, nil
+	readmeStr := fmt.Sprintf(templateStr, inputStr, outputStr)
+	if err := ioutil.WriteFile(path+"/"+"DEMO-README.md", []byte(readmeStr), 0644); err != nil {
+		log.Fatalf("%+v", err)
+	}
 }
