@@ -17,10 +17,15 @@ jobs:
         id: go
       - name: Get dependencies
         run: go mod download
+
+      - name: Gox Installation
+        run: go get github.com/mitchellh/gox
+
       - name: Build normal
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o module-gendoc .
-      #            zip module-gendoc.zip module-gendoc
+          gox -osarch="linux/amd64" --output="module-linux"
+          gox -osarch="darwin/amd64" --output="module-mac"
+          gox -osarch="windows/amd64" --output="module-win"
       - name: Create Release
         id: Create_release
         uses: actions/create-release@v1
@@ -31,14 +36,43 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+
       - name: Upload Release normal linux
-        id: upload-release-asset
+        id: upload-release-asset-linux
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./module-gendoc
-          asset_name: module-gendoc-${{ steps.create_release.outputs.tag }}-linux-x64
+          asset_path: ./module-linux
+          asset_name: module-gendoc-linux
           asset_content_type: application/zip
 
+      - name: Upload Release normal macos
+        id: upload-release-asset-mac
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./module-mac
+          asset_name: module-gendoc-mac
+          asset_content_type: application/zip
+
+      - name: Upload Release normal windows
+        id: upload-release-asset-windows
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./module-win.exe
+          asset_name: module-gendoc-win
+          asset_content_type: application/zip
+
+      - name: notification us
+        uses: zzzze/webhook-trigger@master
+        with:
+          webhook_url: ${{ secrets.WECHATHOOK }}
+          options: " -H \"Content-Type: application/json\" "
+          data: "{\"msgtype\": \"text\", \"text\": {   \"content\": \"hello world\"}}"
