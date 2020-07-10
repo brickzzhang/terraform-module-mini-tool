@@ -79,4 +79,4 @@ jobs:
         with:
           webhook_url: ${{ secrets.WECHATHOOK }}
           options: " -H \"Content-Type: application/json\" "
-          data: "{\"msgtype\": \"markdown\", \"markdown\": {   \"content\": \"热烈庆祝🎉🎉🎉🎉🎉🎉🎉${{steps.tag.outputs.tag}} 发布\n >[点击查看](${{ steps.create_release.outputs.html_url }})\"}}"
+          data: "{\"msgtype\": \"markdown\", \"markdown\": {   \"content\": \"热烈庆祝 ${{steps.tag.outputs.tag}} 发布 🎉🎉🎉🎉🎉🎉🎉 \n >[点击查看](${{ steps.create_release.outputs.html_url }})\"}}"

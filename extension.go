@@ -455,7 +455,8 @@ var gitignore =
 *.log
 *.tfvars
 *.tfstate
-*.tfstate.backup`
+*.tfstate.backup
+DEMO-README.md`
 
 var moduleInitHint = `
 Caution: Module initiation will OVERWRITE files under your module dir, please be aware of it.

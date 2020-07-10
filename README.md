@@ -14,7 +14,16 @@ A mini tool which support below functions:
 
 1.Download the binary file from [release assets](https://github.com/brickzzhang/terraform-module-readme-gen/releases).
 
-2.Run the binary file and follow the hint.
+2.Run the binary file and follow the hint:
+
+```markdown
+|---------------------------------------------------|
+|------ Please select which function you want ------|
+|------ [0] module init ----------------------------|
+|------ [1] README generate ------------------------|
+|------ [q] quit -----------------------------------|
+|---------------------------------------------------|
+```
 
 then you can copy the content of `DEMO-README.md` file under your specific dir.
 
