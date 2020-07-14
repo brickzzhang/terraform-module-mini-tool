@@ -2,4 +2,5 @@
 DEMO-README.md
 *variables.tf
 *outputs.tf
-terraform-module-readme-gen*
+module-tool-*
+module-mini-tool*

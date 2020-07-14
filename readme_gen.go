@@ -18,57 +18,61 @@ func inputGenReadmeStr(data jsonObj) string {
 	var inputLine = "| %s | %s | %s | %s | %s \n"
 
 	for k, v := range data["variable"].(jsonObj) {
-		of := reflect.ValueOf(v)
-		typeName := of.Kind()
-		if typeName == reflect.Map {
-			keys := of.MapKeys()
-			description, required, typeInterface := "", "no", "string"
+		val := reflect.ValueOf(v)
+		if val.Kind() == reflect.Map {
+			description, required, typeInterface := "", "yes", "string"
 			var defaultInterface interface{}
-			for key := range keys {
-				if keys[key].String() == "description" {
-					description = of.MapIndex(keys[key]).Elem().String()
-				}
-				if keys[key].String() == "required" {
-					requireds := of.MapIndex(keys[key])
-					if !requireds.IsNil() {
-						required = "yes"
-					}
-				}
-
-				if keys[key].String() == "type" {
-					spkind := of.MapIndex(keys[key])
-					resultStr := spkind.Elem().String()
-					resultStr = strings.ReplaceAll(resultStr, "${", "")
-					resultStr = strings.ReplaceAll(resultStr, "}", "")
-					typeInterface = resultStr
-					if strings.Index(resultStr, "object") == 0 {
+			for _, e := range val.MapKeys() {
+				switch e.String() {
+				case "description":
+					description = val.MapIndex(e).Elem().String()
+				case "type":
+					typeInterface = val.MapIndex(e).Elem().String()
+					typeInterface = strings.ReplaceAll(typeInterface, "${", "")
+					typeInterface = strings.ReplaceAll(typeInterface, "}", "")
+					typeInterface = strings.ReplaceAll(typeInterface, "\n", "<br>")
+					if strings.Index(typeInterface, "object") == 0 {
 						typeInterface = "object"
 					}
-				}
-
-				if keys[key].String() == "default" {
-					ele := of.MapIndex(keys[key]).Elem()
-					if ele.Kind() == reflect.String {
-						result := strings.ReplaceAll(ele.String(), "${", "")
-						result = strings.ReplaceAll(result, "}", "")
-						defaultInterface = result
-					} else if ele.Kind() == reflect.Int {
+					if strings.Index(typeInterface, "list") == 0 {
+						typeInterface = "list"
+					}
+					if strings.Index(typeInterface, "map") == 0 {
+						typeInterface = "map"
+					}
+				case "default":
+					required = "no"
+					ele := val.MapIndex(e).Elem()
+					switch ele.Kind() {
+					case reflect.String:
+						defaultInterface = strings.ReplaceAll(ele.String(), "${", "")
+						defaultInterface = strings.ReplaceAll(defaultInterface.(string), "}", "")
+						if strings.ToLower(defaultInterface.(string)) == "true" || strings.ToLower(defaultInterface.(string)) == "false" {
+							typeInterface = "bool"
+						}
+					case reflect.Int:
 						defaultInterface = ele.Int()
-					} else if ele.Kind() == reflect.Bool {
+						typeInterface = "number"
+					case reflect.Bool:
 						defaultInterface = ele.Bool()
-
-					} else if ele.Kind() == reflect.Map {
+						typeInterface = "bool"
+					case reflect.Map:
 						if ele.IsValid() {
 							defaultInterface, _ = json.Marshal(map[string]interface{}{})
 						}
-					} else if ele.Kind() == reflect.Slice {
+						typeInterface = "map"
+					case reflect.Slice:
 						if ele.IsValid() {
 							defaultInterface, _ = json.Marshal([]interface{}{})
 						}
-					} else {
+						typeInterface = "list"
+					default:
 						defaultInterface = "xxxxxxxx"
 					}
 				}
+			}
+			if defaultInterface == nil {
+				defaultInterface = ""
 			}
 			str := fmt.Sprintf(inputLine, k, description, typeInterface, defaultInterface, required)
 			inputStr += str

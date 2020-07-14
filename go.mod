@@ -1,4 +1,4 @@
-module terraform-module-readme-gen
+module module-mini-tool
 
 go 1.14
 
