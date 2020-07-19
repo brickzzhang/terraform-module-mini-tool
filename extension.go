@@ -30,7 +30,7 @@ This module can create VPC and VPC Subnet[MODIFY !!!].
 
 ## Authors
 
-Created and maintained by [TencentCloud](https://github.com/terraform-providers/terraform-provider-tencentcloud)
+Created and maintained by [TencentCloud](https://github.com/tencentcloudstack/terraform-provider-tencentcloud)
 
 ## License
 
