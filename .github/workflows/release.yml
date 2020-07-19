@@ -1,7 +1,6 @@
 name: GO_RELEASE
 on:
   push:
-    branches: [ master ]
     tags:
       - "v*"
 
